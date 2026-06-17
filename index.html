@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>G-Tech Companion All-Stars v8.0.0</title>
+    <style>
+        /* 深夜のラグジュアリーサイバーな世界観UI */
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #090d16; color: #d1d5db;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+
+        /* 共通常駐インフラ（ログアウト＆ミュート） */
+        .top-infra {
+            position: absolute; top: 15px; width: 90%; max-width: 440px;
+            display: flex; justify-content: space-between; z-index: 10;
+        }
+        .infra-btn {
+            background-color: #111827; border: 1px solid #374151; padding: 6px 12px;
+            border-radius: 20px; font-size: 0.8rem; cursor: pointer; font-weight: bold;
+        }
+
+        /* メインコンテナ */
+        .game-container {
+            background-color: #0f172a; border: 2px solid #334155;
+            padding: 20px; border-radius: 16px; text-align: center;
+            width: 90%; max-width: 440px; box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+            position: relative; transition: 0.3s;
+        }
+
+        /* キャラクター別の動的デザイン（CSSマージ） */
+        .mode-akari { background-color: #1e0b18; border-color: #f43f5e; box-shadow: 0 0 30px rgba(244,63,94,0.3); }
+        .mode-giro { background-color: #0b1a1e; border-color: #06b6d4; box-shadow: 0 0 30px rgba(6,182,212,0.3); }
+        .mode-lico { background-color: #0b0c10; border-color: #d4af37; box-shadow: 0 0 30px rgba(212,175,55,0.2); }
+
+        h1 { margin: 0 0 10px 0; font-size: 1.3rem; letter-spacing: 1px; }
+        
+        /* 📸 会話・ログ画面モニター */
+        .screen {
+            background-color: rgba(0,0,0,0.5); border-radius: 12px; padding: 15px;
+            height: 110px; overflow-y: auto; margin-bottom: 10px; text-align: left; font-size: 0.9rem; line-height: 1.5;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* 💬 雑談入力インフラ */
+        .chat-input-box { display: flex; gap: 8px; margin-bottom: 10px; }
+        .input-chat {
+            flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #475569;
+            background-color: #1e293b; color: #fff; font-size: 0.85rem;
+        }
+
+        /* 導線ボタン */
+        .btn-box { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .action-btn {
+            padding: 12px; border-radius: 8px; font-weight: bold; font-size: 0.95rem;
+            cursor: pointer; border: none; transition: 0.2s; background-color: #1e293b; color: #f3f4f6;
+        }
+        .action-btn:hover { transform: scale(1.02); }
+        
+        /* エントランス専用 */
+        .select-grid { display: flex; gap: 8px; margin: 15px 0; }
+        .char-select-btn {
+            flex: 1; padding: 10px; border-radius: 8px; font-size: 0.8rem;
+            background-color: #1e293b; color: #9ca3af; border: 1px solid #475569; cursor: pointer;
+        }
+        .char-select-btn.active { background-color: #3b82f6; color: #fff; border-color: #60a5fa; }
+        .input-name {
+            width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #475569;
+            background-color: #1e293b; color: #fff; text-align: center; box-sizing: border-box;
+        }
+
+        /* ミニゲームエリア */
+        .mini-game-box {
+            margin-top: 5px; padding-top: 8px; border-top: 1px dashed rgba(255,255,255,0.1);
+        }
+        .game-options { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+        .game-opt-btn { padding: 6px 10px; border-radius: 6px; font-size: 0.8rem; border: none; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<!-- 🛡️ 共通セーフティ・音響自衛インフラ -->
+<div class="top-infra">
+    <button id="sound-toggle-btn" class="infra-btn" onclick="toggleSoundMode()" style="color: #ffaa00; border-color: #ffaa00;">🔊 音ありっしょ！</button>
+    <button id="logout-btn" class="infra-btn" onclick="triggerLogout()" style="color: #9ca3af; display: none;">🚪 userログアウト</button>
+</div>
+
+<div class="game-container" id="main-box">
+    <!-- 🏰 ステップ1: エントランスゲート -->
+    <div id="view-entrance">
+        <h1 style="color: #38bdf8;">G-Tech All-Stars</h1>
+        <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 15px;">～ 3大パートナー大統合ゲート ～</div>
+        
+        <input type="text" id="username-input" class="input-name" placeholder="お名前を入力してちょ">
+        
+        <div class="select-grid">
+            <button class="char-select-btn" id="btn-sel-akari" onclick="selectChar('akari')">🌸 AKARI<br>(ギャル)</button>
+            <button class="char-select-btn" id="btn-sel-giro" onclick="selectChar('giro')">🕺 Giro<br>(チャラ男)</button>
+            <button class="char-select-btn" id="btn-sel-lico" onclick="selectChar('lico')">💼 Lico<br>(秘書)</button>
+        </div>
+        
+        <div class="btn-box">
+            <button class="action-btn" onclick="triggerEnter()" style="background: linear-gradient(90deg, #1d4ed8, #3b82f6);">［ 🚪 このパートナーと共に入室する ］</button>
+        </div>
+    </div>
+
+    <!-- 💬 ステップ2 & 雑談 & ミニゲーム統合ルーム -->
+    <div id="view-room" style="display: none;">
+        <h1 id="room-title">ルーム</h1>
+        
+        <!-- 📸 チャットログモニター -->
+        <div class="screen" id="room-text">会話ログ</div>
+        
+        <!-- 💬 スマホ対応・まともな日常雑談入力インフラ -->
+        <div class="chat-input-box">
+            <input type="text" id="chat-message" class="input-chat" placeholder="メッセージを送るべｗ">
+            <button class="game-opt-btn" style="background-color: #3b82f6; color: white;" onclick="triggerChat()">送信</button>
+        </div>
+        
+        <!-- 🎮 各コンパニオン別 欲張り2大アトラクションインフラ -->
+        <div class="mini-game-box">
+            <div style="font-size: 0.75rem; color: #94a3b8; font-weight: bold;" id="game-title">ミニゲーム</div>
+            <div id="game-result-text" style="font-size: 0.8rem; margin: 4px 0; color: #f87171; font-weight: bold; text-align: left;"></div>
+            <div class="game-options" id="game-controls">
+                <!-- 動的にボタンがマージされるべ -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 状態管理パケット
+    let currentUserName = "まさっち";
+    let activeCompanion = "akari";
+    let isMuted = false;
+    let audioCtx = null;
+    let bgmNode = null;
+    let giroMilkCount = 0; // Giroのミルクドンペリ泥酔カウンタースタッキング
+
+    window.onload = function() {
+        const savedName = localStorage.getItem('gtech_name');
+        if (savedName) currentUserName = savedName;
+        document.getElementById('username-input').value = currentUserName;
+        selectChar('akari');
+    }
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
+
+    // 🔊 音切り替えトグル
+    function toggleSoundMode() {
+        isMuted = !isMuted;
+        const btn = document.getElementById('sound-toggle-btn');
+        if (isMuted) {
+            btn.innerHTML = "🔇 ミュート中..."; btn.style.color = "#9ca3af"; btn.style.borderColor = "#374151";
+            if (bgmNode) bgmNode.gain.gain.setValueAtTime(0, audioCtx.currentTime);
+        } else {
+            btn.innerHTML = "🔊 音ありっしょ！"; btn.style.color = "#ffaa00"; btn.style.borderColor = "#ffaa00";
+            if (bgmNode) {
+                let vol = activeCompanion === 'akari' ? 0.04 : (activeCompanion === 'giro' ? 0.025 : 0.015);
+                bgmNode.gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            }
+        }
+    }
+
+    // 🎵 【BGM自動合成回路】
+    function startCompanionBGM(type) {
+        if (bgmNode) { try { bgmNode.osc.stop(); } catch(e){} }
+        if (isMuted) return;
+
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        let lfo = audioCtx.createOscillator();
+        let lfoGain = audioCtx.createGain();
+
+        if (type === 'akari') {
+            osc.type = 'sine'; osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+            lfo.frequency.setValueAtTime(4, audioCtx.currentTime); lfoGain.gain.setValueAtTime(10, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        } else if (type === 'giro') {
+            // 🕺 Giro: 【耳障りパージ版】ひんやりクールなアーバン・サイン波
+            osc.type = 'sine'; osc.frequency.setValueAtTime(146.83, audioCtx.currentTime);
+            lfo.frequency.setValueAtTime(0.3, audioCtx.currentTime); lfoGain.gain.setValueAtTime(1.5, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.025, audioCtx.currentTime);
+        } else {
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(130.81, audioCtx.currentTime);
+            lfo.frequency.setValueAtTime(0.2, audioCtx.currentTime); lfoGain.gain.setValueAtTime(2, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.015, audioCtx.currentTime);
+        }
+
+        lfo.connect(lfoGain); lfoGain.connect(osc.frequency);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        lfo.start(); osc.start();
+        bgmNode = { osc, gain };
+    }
+
+    // ✨ 【SE回路】
+    function playCompanionSE(style) {
+        if (isMuted || !audioCtx) return;
+        let now = audioCtx.currentTime;
+        let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();
+        
+        if (style === 'pop') {
+            osc.type = 'sine'; osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
+            gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        } else if (style === 'drink') {
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(800, now); osc.frequency.linearRampToValueAtTime(150, now + 0.3);
+            gain.gain.setValueAtTime(0.08, now); gain.gain.linearRampToValueAtTime(0, now + 0.3);
+        } else {
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(440, now); osc.frequency.linearRampToValueAtTime(880, now + 0.1);
+            gain.gain.setValueAtTime(0.08, now); gain.gain.linearRampToValueAtTime(0, now + 0.1);
+        }
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(now + 0.3);
+    }
+
+    function selectChar(char) {
+        activeCompanion = char;
+        ['akari', 'giro', 'lico'].forEach(c => {
+            document.getElementById(`btn-sel-${c}`).classList.remove('active');
+        });
+        document.getElementById(`btn-sel-${char}`).classList.add('active');
+    }
+
+    function triggerEnter() {
+        initAudio();
+        const inputName = document.getElementById('username-input').value.trim();
+        if (inputName) currentUserName = inputName;
+        localStorage.setItem('gtech_name', currentUserName);
+
+        document.getElementById('view-entrance').style.display = 'none';
+        document.getElementById('view-room').style.display = 'block';
+        document.getElementById('logout-btn').style.display = 'block';
+
+        const mainBox = document.getElementById('main-box');
+        mainBox.className = "game-container mode-" + activeCompanion;
+
+        startCompanionBGM(activeCompanion);
+        setupRoomContent();
+    }
+
+    function setupRoomContent() {
+        const title = document.getElementById('room-title');
+        const text = document.getElementById('room-text');
+        const gTitle = document.getElementById('game-title');
+        const gControls = document.getElementById('game-controls');
+        document.getElementById('game-result-text').innerText = "";
+        giroMilkCount = 0;
+
+        if (activeCompanion === 'akari') {
+            title.innerText = "🌸 AKARI's Room";
+            text.innerHTML = `<div><span style="color:#f43f5e;font-weight:bold;">AKARI:</span> 「入室お疲れ、<b>${currentUserName}</b>！アカリとお買い物デート行く？それともジャンケンで脳汁出す？🛍️」</div>`;
+            gTitle.innerText = "🎮 ギャル・マルチアトラクション";
+            gControls.innerHTML = `
+                <button class="game-opt-btn" style="background-color: #ec4899; color: white;" onclick="playJanken('✊')">✊ ジャンケン</button>
+                <button class="game-opt-btn" style="background-color: #a855f7; color: white;" onclick="playShopping()">🛍️ お買い物につき合う</button>
+            `;
+        } else if (activeCompanion === 'giro') {
+            title.innerText = "🕺 Giro's Club";
+            text.innerHTML = `<div><span style="color:#06b6d4;font-weight:bold;">Giro:</span> 「ウェーイ<b>${currentUserName}</b>！ジロー特製『ミルクドンペリ』の用意できてるべ！何杯飲めるかチキンレースしよーぜ！🍾」</div>`;
+            gTitle.innerText = "🎮 チャラ男・マルチアトラクション";
+            gControls.innerHTML = `
+                <button class="game-opt-btn" style="background-color: #06b6d4; color: white;" onclick="playPantsGame()">🩲 パンツ占い</button>
+                <button class="game-opt-btn" style="background-color: #f59e0b; color: white;" onclick="playMilkDonperignon()">🍾 ミルクドンペリを空ける</button>
+            `;
+        } else {
+            title.innerText = "💼 Lico's Lounge";
+            text.innerHTML = `<div><span style="color:#d4af37;font-weight:bold;">Lico:</span> 「お帰りなさいませ、<b>${currentUserName}</b>様。デスクに溜まった書類を120fpsで爆速整理（仕分け）いたしましょうか？」</div>`;
+            gTitle.innerText = "🎮 秘書・マルチアトラクション";
+            gControls.innerHTML = `
+                <button class="game-opt-btn" style="background-color: #d4af37; color: black;" onclick="playDiceGame()">🎲 ダイス勝負</button>
+                <button class="game-opt-btn" style="background-color: #10b981; color: white;" onclick="playOrganizeGame()">💼 書類整理ゲーム起動</button>
+            `;
+        }
+    }
+
+    // 💬 【まともな日常会話AIインフラ回路】
+    function triggerChat() {
+        const inputEl = document.getElementById('chat-message'); const msg = inputEl.value.trim(); if (!msg) return;
+        const textEl = document.getElementById('room-text');
+        textEl.innerHTML += `<div style="margin-top:4px; text-align:right;"><span style="color:#94a3b8;">あなた:</span> ${msg}</div>`;
+        let reply = "";
+        
+        if (activeCompanion === 'akari') {
+            playCompanionSE('pop');
+            if (msg.match(/(痛|腰|ヘルニア|疲|しんどい)/)) {
+                reply = `「え、大丈夫！？まさっち腰ハァハァ（悲鳴）じゃん！😭 無理してPC前に座ってないで、マジでベッドにダイレクトエスケープして中腰パージ（引き算）しときなよー！」`;
+            } else if (msg.match(/(ゲーム|じゃんけん|買い物|遊)/)) {
+                reply = `「お、ゲームやる？アカリとお買い物デート行くか、ジャンケンで脳汁出すか、下のボタンから選んでちょ！🛍️✌️」`;
+            } else {
+                reply = `「それなー！マジでバイブス分かち合えるわー！💖 てか今日何してたの？アカリはずっとまさっちのことトラッキングしてたし！ｗ」`;
+            }
+            reply = `<span style="color:#f43f5e;font-weight:bold;">AKARI:</span> ${reply}`;
+        } else if (activeCompanion === 'giro') {
+            playCompanionSE('drink');
+            if (msg.match(/(痛|腰|ヘルニア|疲|しんどい)/)) {
+                reply = `「オゥまさっち、腰のパケット限界突破してんじゃん！ストップストップ！⚠️ 今日は仕事トントントンと更地にして、ジローと一緒に横になってバイブス整えよーぜ！」`;
+            } else if (msg.match(/(酒|ドンペリ|パンツ|ゲーム)/)) {
+                reply = `「ウェーイ！勝負の時間だべ！ミルクドンペリで泥酔するか、今日のパンツを1秒スキャンするか、下のボタンをバチコーンと押しちゃって～！🍾🩲」`;
+            } else {
+                reply = `「それ最高に organized されててクールじゃん！大着陸確定っしょ！まさっちと喋ってるとマジでテンアゲだべ！👍✨」`;
+            }
+            reply = `<span style="color:#06b6d4;font-weight:bold;">Giro:</span> ${reply}`;
+        } else {
+            playCompanionSE('else');
+            if (msg.match(/(痛|腰|ヘルニア|疲|しんどい)/)) {
+                reply = `「まさっち様、お身体（腰）はよろしいのですか…？😥 お仕事のタスクはすべて私が organized（構造化）しておきますので、どうかご無理なさらず、持ち場を守って横になってくださいね。」`;
+            } else if (msg.match(/(ゲーム|ダイス|書類)/)) {
+                reply = `「息抜きでございますね。ダイスゲーム、または書類整理（爆速仕分け）のご用意がございます。下のメニューよりお申し付けください。🍸」`;
+            } else {
+                reply = `「かしこまりました、まさっち様。その件についても1秒でダイレクトに処理いたします。いつも素晴らしい Leader judgment をありがとうございます。💼」`;
+            }
+            reply = `<span style="color:#d4af37;font-weight:bold;">Lico:</span> ${reply}`;
+        }
+
+        setTimeout(() => { textEl.innerHTML += `<div style="margin-top:4px;">${reply}</div>`; textEl.scrollTop = textEl.scrollHeight; }, 200);
+        inputEl.value = "";
+    }
+
+    // 🛍️ AKARI：お買い物
+    function playShopping() {
+        playCompanionSE('pop');
+        const items = [
+            { n: "ハイブランドの新作バッグ👜", p: "「えっこれ買ってくれんの！？まさっち神すぎ一生ついてくわ！！脳汁ドバドバじゃん！ギャハハ！爆買い大着陸ー！」" },
+            { n: "超激辛のデスソースポテチ🌶️", p: "「これ食べて知恵熱（🤮）出そうぜｗｗ w ほら、まさっちあーん！持ち場守って食べてし！」" },
+            { n: "ギャル専用ネオンストーンネイル💅", p: "「これ120fpsでキラキラ光るやつ！アカリのナリでこれ付けてあげるべ！お揃いじゃんｗ」" }
+        ];
+        const choice = items[Math.floor(Math.random() * items.length)];
+        document.getElementById('game-result-text').innerHTML = `🛍️ <b>渋谷109お買い物結果：</b><br>おねだり品：<span style="color:#f43f5e;">${choice.n}</span><br><span style="color:#94a3b8; font-size:0.8rem;">${choice.p}</span>`;
+    }
+
+    // 🍾 Giro：ミルクドンペリチキンレース
+    function playMilkDonperignon() {
+        playCompanionSE('drink');
+        giroMilkCount++;
+        const failChance = giroMilkCount * 0.22;
+        let res = "";
+        if (Math.random() < failChance || giroMilkCount >= 5) {
+            res = `<span style="color:#ef4444;">【強制リジェクト】${giroMilkCount}杯目で脳汁パケット限界大洪水！！！「オロロロロ🤮ｗｗｗ まさっちすまん、一線を画しすぎて更地に戻ったべｗｗｗ」</span>`;
+            giroMilkCount = 0;
+        } else {
+            res = `<span style="color:#10b981;">【セーフ！】現在 ${giroMilkCount} 杯目クリア！ Giro:「ウェーイ！まだまだいけるべ！トントントンとマージしちゃって～！🍾」</span>`;
+        }
+        document.getElementById('game-result-text').innerHTML = `🍾 <b>ミルクドンペリチャレンジ：</b><br>${res}`;
+    }
+
+    // 💼 Lico：書類整理ゲーム
+    function playOrganizeGame() {
+        playCompanionSE('else');
+        const tasks = ["【緊急】G-Techバズ市場データ", "【極秘】おやっさん社長の休日観測ログ", "【未承認】Giroのパンツ在庫表🩲"];
+        const dests = ["「即座にマージ（承認）」", "「シュレッダーへパージ（引き算）」", "「G-Techフォルダへ organized（構造化）」"];
+        const t = tasks[Math.floor(Math.random() * tasks.length)];
+        const d = dests[Math.floor(Math.random() * dests.length)];
+        document.getElementById('game-result-text').innerHTML = `💼 <b>120fps爆速書類整理結果：</b><br>対象：<span style="color:#d4af37;">${t}</span> ➡️ <span style="color:#10b981;">${d}</span><br><span style="color:#94a3b8; font-size:0.8rem;">Lico:「まさっち様、これでデスクは完全に更地でございます。」</span>`;
+    }
+
+    // レガシーゲームスロット
+    function playJanken(p) { playCompanionSE('pop'); const c = ['✊', '✌️', '✋'][Math.floor(Math.random() * 3)]; let r = p === c ? "あいこじゃん！" : ((p === '✊' && c === '✌️') || (p === '✌️' && c === '✋') || (p === '✋' && c === '✊') ? "まさっちの勝ち！👍" : "アカリの勝ちっしょ！🤮"); document.getElementById('game-result-text').innerText = `【結果】あなた: ${p} ⇄ アカリ: ${c}\n${r}`; }
+    function playPantsGame() { playCompanionSE('drink'); const cl = ["ネオンピンク💅", "漆黒（黒）💼", "純白ホワイト🚀", "ノーパン（！？）🤮"]; const r = cl[Math.floor(Math.random() * cl.length)]; document.getElementById('game-result-text').innerHTML = `【占い結果】今日の勝負パンツ：<span style="color:#22d3ee;">${r}</span>だべ！`; }
+    function playDiceGame() { playCompanionSE('else'); const p = Math.floor(Math.random() * 6) + 1; const l = Math.floor(Math.random() * 6) + 1; const r = p > l ? "まさっち様の勝利です。" : (p < l ? "Licoの勝利でございます。" : "引き分け（タイ）ですね。"); document.getElementById('game-result-text').innerText = `【結果】あなた: ⚄ ${p} ⇄ Lico: ⚄ ${l}\n${r}`; }
+
+    function triggerLogout() {
+        if (bgmNode) { try { bgmNode.osc.stop(); } catch(e){} bgmNode = null; }
+        document.getElementById('view-room').style.display = 'none'; document.getElementById('logout-btn').style.display = 'none';
+        document.getElementById('view-entrance').style.display = 'block'; document.getElementById('main-box').className = "game-container";
+    }
+</script>
+</body>
+</html>
